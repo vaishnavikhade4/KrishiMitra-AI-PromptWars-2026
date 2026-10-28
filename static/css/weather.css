@@ -1,0 +1,197 @@
+/* ==========================
+   WEATHER PAGE
+========================== */
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background:#f4f8f5;
+}
+
+/* ==========================
+   TOPBAR
+========================== */
+
+.topbar{
+    margin-bottom:30px;
+}
+
+.topbar h2{
+    font-weight:700;
+    color:#1b5e20;
+}
+
+.topbar p{
+    color:#666;
+}
+
+/* ==========================
+   CARDS
+========================== */
+
+.card{
+
+    border:none;
+
+    border-radius:18px;
+
+    box-shadow:0 10px 25px rgba(0,0,0,.08);
+
+}
+
+/* ==========================
+   INPUT
+========================== */
+
+.form-control{
+
+    height:55px;
+
+    border-radius:12px;
+
+    border:1px solid #ddd;
+
+    font-size:16px;
+
+}
+
+.form-control:focus{
+
+    border-color:#16a34a;
+
+    box-shadow:none;
+
+}
+
+/* ==========================
+   BUTTON
+========================== */
+
+.btn-success{
+
+    height:55px;
+
+    border-radius:12px;
+
+    font-size:18px;
+
+    font-weight:600;
+
+    background:#16a34a;
+
+    border:none;
+
+    transition:.3s;
+
+}
+
+.btn-success:hover{
+
+    background:#12833b;
+
+    transform:translateY(-2px);
+
+}
+
+/* ==========================
+   WEATHER DETAILS
+========================== */
+
+h3{
+
+    font-weight:700;
+
+}
+
+h4{
+
+    font-weight:600;
+
+}
+
+.row .col-md-6{
+
+    padding:15px;
+
+}
+
+.row .col-md-6 h5{
+
+    color:#555;
+
+    margin-bottom:10px;
+
+}
+
+.row .col-md-6 h4{
+
+    color:#16a34a;
+
+    font-weight:700;
+
+}
+
+/* ==========================
+   WARNING
+========================== */
+
+#warning{
+
+    background:#fff3cd;
+
+    border-left:5px solid orange;
+
+    padding:15px;
+
+    border-radius:10px;
+
+    font-size:16px;
+
+    color:#333;
+
+}
+
+/* ==========================
+   RECOMMENDATION
+========================== */
+
+#recommendation{
+
+    padding-left:20px;
+
+}
+
+#recommendation li{
+
+    margin-bottom:10px;
+
+    color:#2e7d32;
+
+    font-size:16px;
+
+}
+
+/* ==========================
+   RESPONSIVE
+========================== */
+
+@media(max-width:768px){
+
+    .topbar h2{
+
+        font-size:28px;
+
+    }
+
+    .card{
+
+        margin-bottom:20px;
+
+    }
+
+}

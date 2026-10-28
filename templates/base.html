@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('app_title') }}</title>
+
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <!-- Google Fonts Plus Jakarta Sans & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Unified KrishiMitra Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/krishimitra.css') }}">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="km-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="km-sidebar" id="kmSidebar">
+        <div class="km-sidebar-brand">
+            <div class="km-brand-logo-icon">
+                <i class="fa-solid fa-leaf"></i>
+            </div>
+            <div>
+                <h3>{{ t('brand_name') }}</h3>
+                <small style="color: #34d399; font-weight: 600; font-size: 0.75rem;">AI Smart Farming</small>
+            </div>
+        </div>
+
+        <div class="km-sidebar-user">
+            <div class="position-relative">
+                <img src="https://ui-avatars.com/api/?name={{ user.fullname | urlencode }}&background=10b981&color=fff&bold=true" alt="Farmer">
+                <span class="position-absolute bottom-0 end-0 p-1 bg-success border border-white rounded-circle" style="width: 10px; height: 10px;"></span>
+            </div>
+            <div class="user-meta">
+                <h5>{{ user.fullname }}</h5>
+                <small><i class="fa-solid fa-location-dot me-1"></i> {{ user.district or 'Maharashtra' }}</small>
+            </div>
+        </div>
+
+        <ul class="km-sidebar-nav">
+            <li>
+                <a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}" title="{{ t('dashboard') }}">
+                    <i class="fa-solid fa-grid-2"></i>
+                    <span>{{ t('dashboard') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('detect') }}" class="{% if request.endpoint == 'detect' %}active{% endif %}" title="{{ t('disease_detection') }}">
+                    <i class="fa-solid fa-camera-retro"></i>
+                    <span>{{ t('disease_detection') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('weather') }}" class="{% if request.endpoint == 'weather' %}active{% endif %}" title="{{ t('weather_forecast') }}">
+                    <i class="fa-solid fa-cloud-sun-rain"></i>
+                    <span>{{ t('weather_forecast') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('government') }}" class="{% if request.endpoint in ['government', 'scheme_detail'] %}active{% endif %}" title="{{ t('gov_schemes') }}">
+                    <i class="fa-solid fa-landmark"></i>
+                    <span>{{ t('gov_schemes') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('market') }}" class="{% if request.endpoint == 'market' %}active{% endif %}" title="{{ t('market_prices') }}">
+                    <i class="fa-solid fa-chart-line-up"></i>
+                    <span>{{ t('market_prices') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('assistant') }}" class="{% if request.endpoint == 'assistant' %}active{% endif %}" title="{{ t('farming_assistant') }}">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>{{ t('farming_assistant') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('history') }}" class="{% if request.endpoint == 'history' %}active{% endif %}" title="{{ t('farming_history') }}">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>{{ t('farming_history') }}</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('satellite') }}" class="{% if request.endpoint in ['satellite', 'satellite_list_farms', 'satellite_analyze', 'satellite_history'] %}active{% endif %}" title="Satellite Crop Intelligence">
+                    <i class="fa-solid fa-satellite-dish"></i>
+                    <span>Satellite Intelligence</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('settings') }}" class="{% if request.endpoint == 'settings' %}active{% endif %}" title="{{ t('profile_settings') }}">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>{{ t('profile_settings') }}</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="km-sidebar-footer">
+            <a href="{{ url_for('logout') }}" class="km-logout-btn">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>{{ t('logout') }}</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Section -->
+    <div class="km-main">
+        <!-- Topbar -->
+        <header class="km-topbar">
+            <div class="km-topbar-left">
+                <!-- Mobile Drawer Toggle -->
+                <button class="km-mobile-toggle" id="kmSidebarToggle" aria-label="Toggle navigation">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                
+                <!-- Desktop Sidebar Collapse Toggle -->
+                <button class="km-collapse-btn d-none d-lg-flex" id="kmDesktopCollapse" title="Toggle Sidebar">
+                    <i class="fa-solid fa-bars-staggered"></i>
+                </button>
+
+                <div class="km-page-title d-none d-sm-block">
+                    <h4>{% block title %}{{ t('dashboard') }}{% endblock %}</h4>
+                </div>
+            </div>
+
+            <!-- Topbar Language Switcher & Profile Dropdown -->
+            <div class="km-topbar-actions">
+                <!-- Segmented Language Control with Flags -->
+                <div class="km-lang-pill" title="{{ t('select_language') }}">
+                    <a href="{{ url_for('set_language', lang_code='mr') }}" class="{% if current_lang == 'mr' %}active{% endif %}">
+                        मराठी
+                    </a>
+                    <a href="{{ url_for('set_language', lang_code='en') }}" class="{% if current_lang == 'en' %}active{% endif %}">
+                        English
+                    </a>
+                    <a href="{{ url_for('set_language', lang_code='hi') }}" class="{% if current_lang == 'hi' %}active{% endif %}">
+                        हिंदी
+                    </a>
+                </div>
+
+                <!-- Farmer Profile Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light border dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3 py-1" data-bs-toggle="dropdown">
+                        <img src="https://ui-avatars.com/api/?name={{ user.fullname | urlencode }}&background=10b981&color=fff&bold=true" width="24" height="24" class="rounded-circle" alt="User">
+                        <span class="d-none d-md-inline fw-semibold small">{{ user.fullname }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-md border-0 mt-2" style="border-radius: var(--km-radius-sm);">
+                        <li><a class="dropdown-item py-2" href="{{ url_for('settings') }}"><i class="fa-solid fa-user-gear me-2 text-success"></i> {{ t('profile_settings') }}</a></li>
+                        <li><a class="dropdown-item py-2" href="{{ url_for('history') }}"><i class="fa-solid fa-clock-rotate-left me-2 text-primary"></i> {{ t('farming_history') }}</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item py-2 text-danger" href="{{ url_for('logout') }}"><i class="fa-solid fa-arrow-right-from-bracket me-2"></i> {{ t('logout') }}</a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Flash messages -->
+        <div class="px-4 pt-3">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm border-0" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Dynamic Body Content -->
+        <main class="km-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+
+<!-- Bootstrap 5.3 Bundle JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // Responsive mobile sidebar toggle
+    const toggleBtn = document.getElementById('kmSidebarToggle');
+    const sidebar = document.getElementById('kmSidebar');
+    const desktopCollapseBtn = document.getElementById('kmDesktopCollapse');
+
+    if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth < 992 && !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+    }
+
+    // Desktop collapsible sidebar
+    if (desktopCollapseBtn && sidebar) {
+        desktopCollapseBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+        });
+    }
+</script>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('schemes_header') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 km-animate-fade">
+    <div>
+        <h3 class="fw-extrabold text-success-emphasis mb-1">{{ t('schemes_header') }}</h3>
+        <p class="text-muted small mb-0">{{ t('schemes_lead') }}</p>
+    </div>
+    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold border border-success-subtle">
+        <i class="fa-solid fa-shield-halved me-1"></i> Verified Official Schemes (October 2026)
+    </span>
+</div>
+
+<!-- Guided Eligibility Questionnaire Banner Card -->
+<div class="km-card mb-4 km-animate-fade" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-color: #86efac;">
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="km-stat-icon green shadow-xs">
+            <i class="fa-solid fa-calculator"></i>
+        </div>
+        <div>
+            <h5 class="fw-extrabold text-success-emphasis mb-1">{{ t('eligibility_tool_title') }}</h5>
+            <small class="text-muted">{{ t('eligibility_tool_desc') }}</small>
+        </div>
+    </div>
+
+    <form id="eligibilityForm" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold text-muted">{{ t('question_land') }}</label>
+            <div class="input-group">
+                <input type="number" id="landAcresInput" step="0.5" min="0" value="{{ user.farm_size or 2.5 }}" class="form-control" placeholder="Acres">
+                <span class="input-group-text bg-white">Acres</span>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted">{{ t('question_caste') }}</label>
+            <select id="categoryInput" class="form-select">
+                <option value="general">General / OBC (खुला / इतर मागास)</option>
+                <option value="sc">SC (अनुसूचित जाती)</option>
+                <option value="st">ST (अनुसूचित जमाती)</option>
+                <option value="small_marginal">Small / Marginal Farmer (लहान शेतकरी)</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted">{{ t('question_irrigation') }}</label>
+            <select id="irrigationInput" class="form-select">
+                <option value="drip">Drip Irrigation (ठिबक सिंचन)</option>
+                <option value="rainfed">Rainfed / None (पावसावर अवलंबून)</option>
+                <option value="well">Open Well / Borewell (विहीर / बोअरवेल)</option>
+                <option value="canal">Canal (कालवा)</option>
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <button type="button" class="btn btn-km-primary w-100 py-2" id="checkEligibilityBtn">
+                <i class="fa-solid fa-magnifying-glass me-1"></i> Check
+            </button>
+        </div>
+    </form>
+
+    <!-- Eligibility Results Container -->
+    <div id="eligibilityResults" class="mt-4 pt-3 border-top border-success-subtle d-none">
+        <h6 class="fw-bold text-success mb-2">Recommended Schemes for Your Farm Profile:</h6>
+        <div class="row g-3" id="matchedSchemesList"></div>
+    </div>
+</div>
+
+<!-- Official Security Notice -->
+<div class="alert alert-light border small text-muted mb-4 d-flex align-items-center gap-2 km-animate-fade shadow-xs">
+    <i class="fa-solid fa-lock text-success fs-5"></i>
+    <div>
+        <strong>Security & Privacy Commitment:</strong> {{ t('official_notice') }}
+    </div>
+</div>
+
+<!-- Search & Category Filters -->
+<div class="km-card mb-4 km-animate-fade">
+    <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" id="schemeSearchInput" class="form-control border-start-0 ps-0" placeholder="Search schemes by name, keyword, or subsidy...">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex gap-2 flex-wrap">
+                <button type="button" class="btn btn-sm btn-outline-success filter-cat-btn active rounded-pill px-3" data-cat="all">{{ t('scheme_category_all') }}</button>
+                <button type="button" class="btn btn-sm btn-outline-success filter-cat-btn rounded-pill px-3" data-cat="finance">{{ t('scheme_category_finance') }}</button>
+                <button type="button" class="btn btn-sm btn-outline-success filter-cat-btn rounded-pill px-3" data-cat="insurance">{{ t('scheme_category_insurance') }}</button>
+                <button type="button" class="btn btn-sm btn-outline-success filter-cat-btn rounded-pill px-3" data-cat="irrigation">{{ t('scheme_category_irrigation') }}</button>
+                <button type="button" class="btn btn-sm btn-outline-success filter-cat-btn rounded-pill px-3" data-cat="state">{{ t('scheme_category_state') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schemes Grid -->
+<div class="row g-4 km-animate-fade" id="schemesCardsContainer">
+    {% for s in schemes %}
+    <div class="col-md-6 col-lg-4 scheme-item" data-cat="{{ s.category }}" data-title="{{ s.name.en }} {{ s.name.mr }} {{ s.name.hi }}">
+        <div class="km-card h-100 d-flex flex-column justify-content-between shadow-xs">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="badge bg-success-subtle text-success small rounded-pill px-3 py-1">{{ s.category | upper }}</span>
+                    <small class="text-muted fw-semibold" style="font-size:0.75rem;"><i class="fa-solid fa-circle-check text-success me-1"></i> {{ s.last_verified }}</small>
+                </div>
+                
+                <h5 class="fw-extrabold text-dark mb-2" style="font-size:1.05rem;">
+                    {{ s.name[current_lang] if current_lang in s.name else s.name.en }}
+                </h5>
+                <p class="small text-muted mb-3" style="line-height:1.5;">
+                    {{ s.description[current_lang] if current_lang in s.description else s.description.en }}
+                </p>
+                
+                <div class="mb-3">
+                    <strong class="d-block small text-dark mb-1">{{ t('scheme_benefits') }}:</strong>
+                    <ul class="ps-3 mb-0 small text-muted">
+                        {% for b in (s.benefits[current_lang] if current_lang in s.benefits else s.benefits.en)[:2] %}
+                            <li class="mb-1">{{ b }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
+                <a href="{{ url_for('scheme_detail', scheme_id=s.id) }}" class="btn btn-sm btn-outline-success rounded-pill px-3">
+                    <i class="fa-solid fa-circle-info me-1"></i> Details
+                </a>
+                <a href="{{ s.website }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-km-primary rounded-pill px-3">
+                    <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Official Portal
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const searchInput = document.getElementById('schemeSearchInput');
+    const catButtons = document.querySelectorAll('.filter-cat-btn');
+    const schemeItems = document.querySelectorAll('.scheme-item');
+
+    let currentCat = 'all';
+
+    searchInput.addEventListener('input', filterSchemes);
+
+    catButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            catButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentCat = btn.dataset.cat;
+            filterSchemes();
+        });
+    });
+
+    function filterSchemes() {
+        const query = searchInput.value.toLowerCase().trim();
+        schemeItems.forEach(item => {
+            const cat = item.dataset.cat;
+            const title = item.dataset.title.toLowerCase();
+            const matchesCat = (currentCat === 'all' || cat === currentCat);
+            const matchesQuery = (title.includes(query) || query === '');
+
+            if (matchesCat && matchesQuery) {
+                item.classList.remove('d-none');
+            } else {
+                item.classList.add('d-none');
+            }
+        });
+    }
+
+    document.getElementById('checkEligibilityBtn').addEventListener('click', async () => {
+        const land = document.getElementById('landAcresInput').value;
+        const category = document.getElementById('categoryInput').value;
+        const irrigation = document.getElementById('irrigationInput').value;
+
+        const resultsContainer = document.getElementById('eligibilityResults');
+        const listContainer = document.getElementById('matchedSchemesList');
+
+        try {
+            const resp = await fetch('/check_eligibility', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ land_acres: land, category: category, irrigation: irrigation })
+            });
+            const data = await resp.json();
+
+            if (data.success && data.matches.length) {
+                listContainer.innerHTML = "";
+                data.matches.forEach(m => {
+                    const s = m.scheme;
+                    const col = document.createElement('div');
+                    col.className = 'col-md-6';
+                    col.innerHTML = `
+                        <div class="p-3 border rounded-3 bg-white h-100 shadow-xs">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="badge bg-success-subtle text-success small">${s.category.toUpperCase()}</span>
+                                <span class="badge bg-primary-subtle text-primary small">Matched</span>
+                            </div>
+                            <h6 class="fw-bold mb-1">${s.name['{{ current_lang }}'] || s.name.en}</h6>
+                            <p class="small text-muted mb-2">${m.reasons.join(' ')}</p>
+                            <a href="/scheme/${s.id}" class="small text-success fw-bold text-decoration-none">View Scheme Application Steps &rarr;</a>
+                        </div>
+                    `;
+                    listContainer.appendChild(col);
+                });
+                resultsContainer.classList.remove('d-none');
+            }
+        } catch (err) {
+            alert("Error running eligibility check: " + err.message);
+        }
+    });
+</script>
+{% endblock %}

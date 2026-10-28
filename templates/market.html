@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('market_header') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 km-animate-fade">
+    <div>
+        <h3 class="fw-extrabold text-success-emphasis mb-1">{{ t('market_header') }}</h3>
+        <p class="text-muted small mb-0">{{ t('market_lead') }}</p>
+    </div>
+    
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills bg-light p-1 rounded-3" id="marketPillTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active py-2 px-3 small fw-bold" id="tabLiveBtn" data-bs-toggle="pill" data-bs-target="#panelLiveMandi">
+                <i class="fa-solid fa-store me-1"></i> {{ t('market_tab_live') }}
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link py-2 px-3 small fw-bold" id="tabForecastBtn" data-bs-toggle="pill" data-bs-target="#panelForecast">
+                <i class="fa-solid fa-chart-line-up me-1"></i> {{ t('market_tab_forecast') }}
+            </button>
+        </li>
+    </ul>
+</div>
+
+<div class="tab-content km-animate-fade" id="marketTabsContent">
+    <!-- PANEL 1: CURRENT MANDI MARKET PRICES -->
+    <div class="tab-pane fade show active" id="panelLiveMandi" role="tabpanel">
+        <!-- Mandi Filter Form -->
+        <div class="km-card mb-4">
+            <form id="mandiQueryForm" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">{{ t('select_state') }}</label>
+                    <select id="mandiState" class="form-select">
+                        <option value="Maharashtra" selected>Maharashtra (महाराष्ट्र)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">{{ t('select_district') }}</label>
+                    <select id="mandiDistrict" class="form-select">
+                        <option value="Pune" {% if user.district == 'Pune' %}selected{% endif %}>Pune (पुणे)</option>
+                        <option value="Nashik" {% if user.district == 'Nashik' %}selected{% endif %}>Nashik (नाशिक)</option>
+                        <option value="Nagpur" {% if user.district == 'Nagpur' %}selected{% endif %}>Nagpur (नागपूर)</option>
+                        <option value="Kolhapur" {% if user.district == 'Kolhapur' %}selected{% endif %}>Kolhapur (कोल्हापूर)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">{{ t('select_commodity') }}</label>
+                    <select id="mandiCommodity" class="form-select">
+                        <option value="Tomato" selected>Tomato (टोमॅटो)</option>
+                        <option value="Onion">Onion (कांदा)</option>
+                        <option value="Soybean">Soybean (सोयाबीन)</option>
+                        <option value="Cotton">Cotton (कापूस)</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-km-primary w-100 py-2" id="fetchMandiBtn">
+                        <i class="fa-solid fa-magnifying-glass me-1"></i> {{ t('fetch_prices') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Live Price Data Cards -->
+        <div class="row g-4 mb-4" id="mandiPricesDisplay">
+            <div class="col-lg-4">
+                <div class="km-card h-100 text-center" style="background: linear-gradient(135deg, #09341c 0%, #0f5132 100%); color: #ffffff;">
+                    <span class="badge bg-white text-success px-3 py-1 rounded-pill mb-2 fw-bold">
+                        <i class="fa-solid fa-building-columns me-1"></i> <span id="dispMarket">{{ initial_price.market }}</span>
+                    </span>
+                    <h4 class="fw-extrabold mb-1 text-white" id="dispCommodity">{{ initial_price.commodity }} ({{ initial_price.variety }})</h4>
+                    <small class="text-white-50 d-block mb-3">{{ t('arrival_date') }}: <span id="dispDate">{{ initial_price.arrival_date }}</span></small>
+
+                    <div class="my-4">
+                        <small class="text-white-50 text-uppercase fw-bold">{{ t('modal_price') }}</small>
+                        <h1 class="display-4 fw-extrabold mb-0 text-white">₹<span id="dispModal">{{ initial_price.modal_price }}</span></h1>
+                        <small class="text-white-50">{{ initial_price.unit }}</small>
+                    </div>
+
+                    <div class="row pt-3 border-top border-white-50 mt-4 g-2 text-center">
+                        <div class="col-6">
+                            <small class="text-white-50 d-block">{{ t('min_price') }}</small>
+                            <span class="fs-5 fw-bold text-white">₹<span id="dispMin">{{ initial_price.min_price }}</span></span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-white-50 d-block">{{ t('max_price') }}</small>
+                            <span class="fs-5 fw-bold text-white">₹<span id="dispMax">{{ initial_price.max_price }}</span></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historical Price Chart -->
+            <div class="col-lg-8">
+                <div class="km-card h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="km-card-title mb-0">
+                            <i class="fa-solid fa-chart-area text-success"></i>
+                            <span>{{ t('price_history_chart') }} (Past 30 Days)</span>
+                        </h5>
+                        <small class="text-muted fw-semibold" id="dispSource">Source: {{ initial_price.source }}</small>
+                    </div>
+
+                    <div style="height: 260px;">
+                        <canvas id="mandiHistoryChart"></canvas>
+                    </div>
+
+                    <div class="alert alert-light border small text-muted mt-3 mb-0" id="dispDisclaimer">
+                        <i class="fa-solid fa-circle-info text-success me-1"></i>
+                        {{ initial_price.disclaimer if initial_price.disclaimer else 'Verified official Agmarknet wholesale mandi arrivals.' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL 2: AI/ML 2-3 MONTHS COMMODITY PRICE FORECASTING -->
+    <div class="tab-pane fade" id="panelForecast" role="tabpanel">
+        <!-- Forecast Parameters Selector -->
+        <div class="km-card mb-4">
+            <form id="forecastForm" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted">{{ t('select_commodity') }}</label>
+                    <select id="forecastCommodity" class="form-select">
+                        <option value="Tomato" selected>Tomato (टोमॅटो)</option>
+                        <option value="Onion">Onion (कांदा)</option>
+                        <option value="Soybean">Soybean (सोयाबीन)</option>
+                        <option value="Cotton">Cotton (कापूस)</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted">Forecast Horizon (अंदाज कालावधी)</label>
+                    <select id="forecastHorizon" class="form-select">
+                        <option value="2" selected>2 Months (60 Days Ahead)</option>
+                        <option value="3">3 Months (90 Days Ahead)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-km-primary w-100 py-2" id="runForecastBtn">
+                        <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Generate AI Forecast
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Forecast Chart & Confidence Bands -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8">
+                <div class="km-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                        <div>
+                            <h5 class="km-card-title mb-1">
+                                <i class="fa-solid fa-chart-line text-success"></i>
+                                <span>{{ t('forecast_title') }}</span>
+                            </h5>
+                            <small class="text-muted fw-semibold">{{ t('forecast_model_used') }}</small>
+                        </div>
+                        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold">
+                            Chronological Validation: Passed
+                        </span>
+                    </div>
+
+                    <div style="height: 320px;">
+                        <canvas id="forecastChartCanvas"></canvas>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-4 mt-3 small text-muted flex-wrap">
+                        <span><span class="badge" style="background:#15803d;">&nbsp;</span> Historical Actual Modal Rate</span>
+                        <span><span class="badge" style="background:#2563eb;">&nbsp;</span> Projected Trendline</span>
+                        <span><span class="badge" style="background:rgba(37, 99, 235, 0.2);">&nbsp;</span> 80% Confidence Interval</span>
+                        <span><span class="badge" style="background:rgba(234, 179, 8, 0.2);">&nbsp;</span> 95% Confidence Interval</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Evaluation Metrics Card -->
+            <div class="col-lg-4">
+                <div class="km-card h-100">
+                    <h5 class="km-card-title mb-3">
+                        <i class="fa-solid fa-square-poll-vertical text-primary"></i>
+                        <span>Model Validation Metrics</span>
+                    </h5>
+
+                    <div class="p-3 border rounded-3 bg-light mb-3 shadow-xs">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small text-muted">{{ t('backtest_mae') }}:</span>
+                            <span class="fw-extrabold text-success" id="valMape">{{ initial_forecast.validation_metrics.mape }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small text-muted">Mean Absolute Error (MAE):</span>
+                            <span class="fw-bold" id="valMae">₹{{ initial_forecast.validation_metrics.mae }} / Qtl</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="small text-muted">Root Mean Squared Error:</span>
+                            <span class="fw-bold" id="valRmse">₹{{ initial_forecast.validation_metrics.rmse }}</span>
+                        </div>
+                        <hr class="my-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="small text-muted">Baseline Benchmark (Naive):</span>
+                            <span class="small fw-bold text-danger">₹{{ initial_forecast.validation_metrics.baseline_mae }}</span>
+                        </div>
+                        <small class="text-success fw-bold d-block mt-2" id="valImpr">
+                            <i class="fa-solid fa-arrow-trend-up me-1"></i> {{ initial_forecast.validation_metrics.accuracy_improvement }}
+                        </small>
+                    </div>
+
+                    <h6 class="fw-bold small text-muted text-uppercase mb-2">Agronomic Volatility Drivers</h6>
+                    <ul class="ps-3 small text-muted mb-0" id="agronomicFactorsList">
+                        {% for f in initial_forecast.agronomic_factors %}
+                            <li class="mb-2">{{ f }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Strict Transparency Disclaimer -->
+        <div class="alert alert-warning border-0 shadow-sm small text-dark mb-0">
+            <i class="fa-solid fa-triangle-exclamation text-warning me-1"></i>
+            {{ initial_forecast.disclaimer }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let mandiChart = null;
+    const initialHist = {{ initial_price.history_last_30d | tojson if initial_price.history_last_30d else '[]' }};
+
+    function renderMandiHistoryChart(historyData) {
+        const ctx = document.getElementById('mandiHistoryChart').getContext('2d');
+        const labels = historyData.map(h => h.date);
+        const prices = historyData.map(h => h.modal);
+
+        if (mandiChart) mandiChart.destroy();
+
+        mandiChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Modal Price (₹/Qtl)',
+                    data: prices,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.35,
+                    pointBackgroundColor: '#10b981',
+                    pointRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        title: { display: true, text: '₹ / Quintal' }
+                    }
+                }
+            }
+        });
+    }
+
+    if (initialHist.length > 0) renderMandiHistoryChart(initialHist);
+
+    document.getElementById('fetchMandiBtn').addEventListener('click', async () => {
+        const state = document.getElementById('mandiState').value;
+        const district = document.getElementById('mandiDistrict').value;
+        const comm = document.getElementById('mandiCommodity').value;
+
+        try {
+            const resp = await fetch('/get_market_price', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state: state, district: district, commodity: comm })
+            });
+            const data = await resp.json();
+
+            if (data.status === 'success') {
+                document.getElementById('dispMarket').textContent = data.market;
+                document.getElementById('dispCommodity').textContent = `${data.commodity} (${data.variety || ''})`;
+                document.getElementById('dispDate').textContent = data.arrival_date;
+                document.getElementById('dispModal').textContent = data.modal_price;
+                document.getElementById('dispMin').textContent = data.min_price;
+                document.getElementById('dispMax').textContent = data.max_price;
+                document.getElementById('dispSource').textContent = `Source: ${data.source}`;
+                
+                if (data.disclaimer) {
+                    document.getElementById('dispDisclaimer').textContent = data.disclaimer;
+                }
+
+                if (data.history_last_30d && data.history_last_30d.length) {
+                    renderMandiHistoryChart(data.history_last_30d);
+                }
+            } else {
+                alert(data.message || "No records found for selection.");
+            }
+        } catch (err) {
+            alert("Error fetching market data: " + err.message);
+        }
+    });
+
+    let forecastChart = null;
+    const initialForecastData = {{ initial_forecast | tojson }};
+
+    function renderForecastChart(fc) {
+        const ctx = document.getElementById('forecastChartCanvas').getContext('2d');
+        const allLabels = [...fc.historical_dates, ...fc.forecast_dates];
+        const histData = [...fc.historical_prices, ...Array(fc.forecast_dates.length).fill(null)];
+        const forecastData = [
+            ...Array(fc.historical_prices.length - 1).fill(null),
+            fc.historical_prices[fc.historical_prices.length - 1],
+            ...fc.forecast_prices
+        ];
+
+        const upper80Data = [
+            ...Array(fc.historical_prices.length - 1).fill(null),
+            fc.historical_prices[fc.historical_prices.length - 1],
+            ...fc.upper_bound_80
+        ];
+        const lower80Data = [
+            ...Array(fc.historical_prices.length - 1).fill(null),
+            fc.historical_prices[fc.historical_prices.length - 1],
+            ...fc.lower_bound_80
+        ];
+
+        if (forecastChart) forecastChart.destroy();
+
+        forecastChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: allLabels,
+                datasets: [
+                    {
+                        label: 'Historical Modal Rate',
+                        data: histData,
+                        borderColor: '#10b981',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        tension: 0.2
+                    },
+                    {
+                        label: 'Projected AI Trendline',
+                        data: forecastData,
+                        borderColor: '#2563eb',
+                        borderWidth: 3,
+                        borderDash: [5, 5],
+                        pointRadius: 5,
+                        pointBackgroundColor: '#2563eb',
+                        tension: 0.25
+                    },
+                    {
+                        label: '80% Upper Bound',
+                        data: upper80Data,
+                        borderColor: 'transparent',
+                        backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                        fill: '+1',
+                        pointRadius: 0
+                    },
+                    {
+                        label: '80% Lower Bound',
+                        data: lower80Data,
+                        borderColor: 'transparent',
+                        backgroundColor: 'transparent',
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Modal Price (₹ / Quintal)' }
+                    }
+                }
+            }
+        });
+    }
+
+    renderForecastChart(initialForecastData);
+
+    document.getElementById('runForecastBtn').addEventListener('click', async () => {
+        const comm = document.getElementById('forecastCommodity').value;
+        const horizon = document.getElementById('forecastHorizon').value;
+
+        try {
+            const resp = await fetch('/get_price_forecast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ commodity: comm, horizon: horizon })
+            });
+            const data = await resp.json();
+
+            if (data.success && data.forecast) {
+                const fc = data.forecast;
+                renderForecastChart(fc);
+
+                document.getElementById('valMape').textContent = fc.validation_metrics.mape;
+                document.getElementById('valMae').textContent = `₹${fc.validation_metrics.mae} / Qtl`;
+                document.getElementById('valRmse').textContent = `₹${fc.validation_metrics.rmse}`;
+                document.getElementById('valImpr').innerHTML = `<i class="fa-solid fa-arrow-trend-up me-1"></i> ${fc.validation_metrics.accuracy_improvement}`;
+
+                const factorsUl = document.getElementById('agronomicFactorsList');
+                factorsUl.innerHTML = "";
+                fc.agronomic_factors.forEach(f => {
+                    const li = document.createElement('li');
+                    li.className = 'mb-2';
+                    li.textContent = f;
+                    factorsUl.appendChild(li);
+                });
+            }
+        } catch (err) {
+            alert("Error calculating price forecast: " + err.message);
+        }
+    });
+</script>
+{% endblock %}

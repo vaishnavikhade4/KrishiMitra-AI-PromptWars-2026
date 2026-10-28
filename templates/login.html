@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="{{ current_lang }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t('login_title') }} &mdash; {{ t('brand_name') }}</title>
+    
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6.5 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- KrishiMitra Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/krishimitra.css') }}">
+    
+    <style>
+        .split-card {
+            background: #ffffff;
+            border-radius: var(--km-radius-lg);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--km-border);
+            padding: 44px 40px;
+        }
+        .form-floating > .form-control:focus ~ label {
+            color: var(--km-brand-emerald);
+        }
+        .form-control:focus {
+            border-color: var(--km-brand-emerald);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+        }
+        .pw-toggle-btn {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--km-text-light);
+            cursor: pointer;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+<div class="km-auth-split">
+    <!-- Visual Left Panel -->
+    <div class="km-auth-visual">
+        <div class="d-flex align-items-center gap-3">
+            <div class="km-brand-logo-icon">
+                <i class="fa-solid fa-leaf"></i>
+            </div>
+            <div>
+                <h3 class="fw-bold mb-0 text-white">{{ t('brand_name') }}</h3>
+                <small class="text-white-50">AI Smart Farming & Intelligence</small>
+            </div>
+        </div>
+
+        <div class="my-auto py-5">
+            <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fs-6 mb-3 fw-bold">
+                <i class="fa-solid fa-shield-halved me-1"></i> Trusted by 10,000+ Indian Farmers
+            </span>
+            <h1 class="display-4 fw-extrabold mb-4 text-white" style="line-height: 1.15;">
+                Cultivating Intelligence, Empowering Farmers.
+            </h1>
+            <p class="lead text-white-50 mb-5" style="max-width: 520px;">
+                Instant deep learning plant diagnostics, precision agronomic weather advisories, verified government subsidies, and AI price trend forecasting.
+            </p>
+
+            <!-- Testimonial/Pill badge -->
+            <div class="p-4 rounded-3 border border-white-50 bg-black bg-opacity-25 backdrop-blur" style="max-width: 480px;">
+                <div class="d-flex align-items-center gap-3 mb-2">
+                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=120&q=80" width="46" height="46" class="rounded-circle border border-2 border-success" alt="Farmer">
+                    <div>
+                        <h6 class="mb-0 fw-bold text-white">Anil Gaikwad</h6>
+                        <small class="text-white-50">Tomato Grower &bull; Nashik, Maharashtra</small>
+                    </div>
+                </div>
+                <p class="small text-white-50 mb-0 italic">
+                    "KrishiMitra diagnosed early blight on my tomato crop in 2 seconds and gave both chemical and organic options. Saved my 4-acre harvest."
+                </p>
+            </div>
+        </div>
+
+        <div class="text-white-50 small">
+            &copy; 2026 KrishiMitra AI &bull; Prompt Wars Hackathon 2026
+        </div>
+    </div>
+
+    <!-- Right Side Form Panel -->
+    <div class="km-auth-form-side">
+        <div class="km-auth-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <a href="/" class="text-decoration-none d-flex align-items-center gap-2 d-lg-none">
+                    <i class="fa-solid fa-leaf text-success fs-4"></i>
+                    <span class="fw-bold fs-5 text-dark">{{ t('brand_name') }}</span>
+                </a>
+
+                <!-- Language Switcher -->
+                <div class="km-lang-pill ms-auto" title="{{ t('select_language') }}">
+                    <a href="{{ url_for('set_language', lang_code='mr') }}" class="{% if current_lang == 'mr' %}active{% endif %}">मराठी</a>
+                    <a href="{{ url_for('set_language', lang_code='en') }}" class="{% if current_lang == 'en' %}active{% endif %}">English</a>
+                    <a href="{{ url_for('set_language', lang_code='hi') }}" class="{% if current_lang == 'hi' %}active{% endif %}">हिंदी</a>
+                </div>
+            </div>
+
+            <div class="split-card">
+                <h3 class="fw-extrabold mb-1 text-dark">{{ t('login_title') }}</h3>
+                <p class="text-muted small mb-4">{{ t('dash_subtitle') }}</p>
+
+                <!-- Flash feedback -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show py-2 small" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close py-2" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">{{ t('email') }}</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-envelope text-muted"></i></span>
+                            <input type="email" name="email" class="form-control border-start-0 ps-0" placeholder="farmer@krishimitra.org" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-bold small text-muted mb-0">{{ t('password') }}</label>
+                        </div>
+                        <div class="position-relative">
+                            <input type="password" id="loginPasswordInput" name="password" class="form-control pe-5" placeholder="••••••••" required>
+                            <button type="button" class="pw-toggle-btn" id="pwToggleBtn" aria-label="Toggle password visibility">
+                                <i class="fa-solid fa-eye" id="pwToggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-km-primary w-100 py-3 mb-3 fs-6">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i> {{ t('login_btn') }}
+                    </button>
+
+                    <div class="text-center pt-2">
+                        <span class="text-muted small">{{ t('dont_have_account') }}</span>
+                        <a href="{{ url_for('register') }}" class="text-success fw-bold small text-decoration-none ms-1">
+                            {{ t('register') }}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const pwInput = document.getElementById('loginPasswordInput');
+    const pwBtn = document.getElementById('pwToggleBtn');
+    const pwIcon = document.getElementById('pwToggleIcon');
+
+    if (pwBtn && pwInput) {
+        pwBtn.addEventListener('click', () => {
+            const isPassword = pwInput.type === 'password';
+            pwInput.type = isPassword ? 'text' : 'password';
+            pwIcon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+        });
+    }
+</script>
+</body>
+</html>

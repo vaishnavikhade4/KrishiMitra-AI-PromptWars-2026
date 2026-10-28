@@ -1,0 +1,327 @@
+/* ==========================================================================
+   KrishiMitra AI — Satellite Crop Intelligence
+   Extends krishimitra.css — does NOT modify or override base styles.
+   ========================================================================== */
+
+/* ── Page Layout ─────────────────────────────────────────────────────────── */
+.sat-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 1199px) {
+    .sat-layout { grid-template-columns: 1fr; }
+}
+
+/* ── Map Container ───────────────────────────────────────────────────────── */
+#sat-map {
+    height: 520px;
+    border-radius: 16px;
+    border: 1px solid #e2e8df;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    position: relative;
+    z-index: 0;
+}
+
+@media (max-width: 768px) {
+    #sat-map { height: 360px; }
+}
+
+/* ── NDVI Legend ─────────────────────────────────────────────────────────── */
+.ndvi-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px;
+    background: rgba(255,255,255,0.96);
+    border: 1px solid #e2e8df;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    min-width: 200px;
+}
+
+.ndvi-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.ndvi-legend-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.ndvi-legend-value {
+    font-size: 0.74rem;
+    color: #6b7280;
+    margin-left: auto;
+}
+
+/* ── Stat Bar (NDVI distribution) ───────────────────────────────────────── */
+.ndvi-dist-bar {
+    height: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    display: flex;
+    background: #f1f5f9;
+    border: 1px solid #e2e8e0;
+}
+
+.ndvi-dist-segment {
+    height: 100%;
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+    position: relative;
+}
+
+.ndvi-dist-segment:first-child { border-radius: 10px 0 0 10px; }
+.ndvi-dist-segment:last-child  { border-radius: 0 10px 10px 0; }
+
+/* ── Zone Grid ───────────────────────────────────────────────────────────── */
+.sat-zone-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.sat-zone-card {
+    border: 1.5px solid #e2e8df;
+    border-radius: 10px;
+    padding: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #fff;
+    text-align: center;
+    position: relative;
+}
+
+.sat-zone-card:hover {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+    transform: translateY(-2px);
+}
+
+.sat-zone-card.selected {
+    border-color: #10b981;
+    background: #f0fdf4;
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.2);
+}
+
+.sat-zone-label {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+}
+
+.sat-zone-ndvi {
+    font-size: 0.78rem;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+.sat-priority-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+}
+
+.priority-high-priority .sat-priority-dot { background: #dc2626; }
+.priority-inspect .sat-priority-dot       { background: #f97316; }
+.priority-monitor .sat-priority-dot       { background: #10b981; }
+
+/* ── Zone Detail Panel ───────────────────────────────────────────────────── */
+#zoneDetailPanel {
+    border-radius: 12px;
+    overflow: hidden;
+    animation: kmFadeIn 0.3s ease;
+}
+
+.zone-detail-header {
+    background: linear-gradient(135deg, #09341c 0%, #0f5132 100%);
+    color: #fff;
+    padding: 14px 18px;
+}
+
+/* ── NDVI Trend Chart ────────────────────────────────────────────────────── */
+#ndviTrendChart {
+    max-height: 260px;
+}
+
+/* ── Map Layer Control Pill ─────────────────────────────────────────────── */
+.sat-layer-control {
+    display: inline-flex;
+    background: rgba(255,255,255,0.95);
+    border: 1px solid #e2e8df;
+    border-radius: 100px;
+    padding: 3px;
+    gap: 2px;
+    backdrop-filter: blur(8px);
+}
+
+.sat-layer-btn {
+    padding: 5px 14px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sat-layer-btn.active {
+    background: #10b981;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+}
+
+.sat-layer-btn:hover:not(.active) {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* ── Status Badges ───────────────────────────────────────────────────────── */
+.sat-badge-demo {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fde68a;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 100px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sat-badge-live {
+    background: #dcfce7;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 100px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ── Farm Boundary Draw Controls ─────────────────────────────────────────── */
+.sat-draw-instructions {
+    background: #f0fdf4;
+    border: 1px dashed #10b981;
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 0.85rem;
+    color: #166534;
+}
+
+/* ── Loading overlay ─────────────────────────────────────────────────────── */
+.sat-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0.88);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    border-radius: 16px;
+    z-index: 1000;
+}
+
+.sat-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #dcfce7;
+    border-top-color: #10b981;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Alert Priority Cards ────────────────────────────────────────────────── */
+.sat-alert-card {
+    border-radius: 10px;
+    padding: 12px 14px;
+    border: 1px solid;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.sat-alert-card.high-priority {
+    background: #fef2f2;
+    border-color: #fecaca;
+}
+
+.sat-alert-card.inspect {
+    background: #fff7ed;
+    border-color: #fed7aa;
+}
+
+.sat-alert-card.monitor {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+
+.sat-alert-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.high-priority .sat-alert-icon { background: #fee2e2; color: #dc2626; }
+.inspect .sat-alert-icon       { background: #ffedd5; color: #ea580c; }
+.monitor .sat-alert-icon       { background: #dcfce7; color: #16a34a; }
+
+/* ── Insight text panel ──────────────────────────────────────────────────── */
+.sat-insight-panel {
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border: 1px solid #a7f3d0;
+    border-radius: 14px;
+    padding: 20px;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: #1e3a2f;
+    white-space: pre-line;
+}
+
+/* ── NDVI value tooltip ──────────────────────────────────────────────────── */
+.sat-pixel-tooltip {
+    background: rgba(7, 41, 22, 0.92);
+    color: #d1fae5;
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    pointer-events: none;
+    max-width: 220px;
+}
+
+/* ── Mobile adjustments ──────────────────────────────────────────────────── */
+@media (max-width: 576px) {
+    .sat-zone-grid { grid-template-columns: repeat(3, 1fr); gap: 5px; }
+    .ndvi-legend { flex-direction: row; flex-wrap: wrap; }
+}

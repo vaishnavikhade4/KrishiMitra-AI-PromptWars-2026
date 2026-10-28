@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}{{ disease_info.disease_name }} — {{ t('treatment_plans') }} — KrishiMitra AI{% endblock %}
+
+{% block content %}
+<!-- Top Header & Actions -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <a href="{{ url_for('history') }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 mb-2">
+            <i class="fa-solid fa-arrow-left me-1"></i> {{ t('farming_history') }}
+        </a>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <h3 class="fw-bold text-success-emphasis mb-0">{{ disease_info.disease_name }}</h3>
+            <span class="badge {% if prediction.is_healthy %}bg-success text-white{% else %}bg-danger text-white{% endif %} rounded-pill px-3 py-1 small">
+                <i class="fa-solid {% if prediction.is_healthy %}fa-heart-circle-check{% else %}fa-triangle-exclamation{% endif %} me-1"></i>
+                {% if prediction.is_healthy %}{{ t('healthy') }}{% else %}{{ t('diseased') }}{% endif %}
+            </span>
+        </div>
+        <p class="text-muted small mb-0 mt-1">
+            <i class="fa-solid fa-seedling text-success me-1"></i> {{ disease_info.plant_name }} &bull; 
+            <i class="fa-regular fa-calendar text-muted me-1"></i> Scanned on {{ prediction.created_at.strftime('%d %B %Y at %H:%M') }} &bull; 
+            <i class="fa-solid fa-bullseye text-primary me-1"></i> AI Confidence: <strong class="text-dark">{{ prediction.confidence }}%</strong>
+        </p>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('detect') }}" class="btn btn-km-primary">
+            <i class="fa-solid fa-camera me-1"></i> {{ t('scan_now') }}
+        </a>
+    </div>
+</div>
+
+<!-- Upper Section: Leaf Photo & Diagnostic Symptoms -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="km-card p-3 text-center h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="small fw-semibold text-muted text-uppercase tracking-wider">Scanned Specimen</span>
+                    <span class="badge bg-dark-subtle text-dark rounded-pill small">ID #{{ prediction.id }}</span>
+                </div>
+                <div class="position-relative rounded-3 overflow-hidden border shadow-xs" style="background: #0f172a; min-height: 220px; display: flex; align-items: center; justify-content: center;">
+                    <img src="{{ url_for('static', filename='uploads/' + prediction.image_filename) }}" 
+                         alt="Scanned Leaf" 
+                         class="img-fluid"
+                         style="max-height: 240px; width: 100%; object-fit: contain;"
+                         onerror="this.src='{{ url_for('static', filename='images/sample_leaf.jpg') }}';">
+                </div>
+            </div>
+            <div class="mt-3 p-2 bg-light rounded-2 small text-muted d-flex align-items-center justify-content-between">
+                <span>Model Target: <strong>Tomato (Solanum lycopersicum)</strong></span>
+                <span class="text-success"><i class="fa-solid fa-microchip"></i> 322 KB Edge CNN</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="km-card h-100">
+            <h5 class="km-card-title mb-3">
+                <i class="fa-solid fa-microscope text-success"></i>
+                <span>{{ t('symptoms') }} & Diagnostic Pathology</span>
+            </h5>
+            
+            <div class="p-3 bg-light rounded-3 border mb-3">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="badge bg-secondary rounded-pill small">Taxonomy</span>
+                    <strong class="text-dark">Scientific Pathogen:</strong>
+                    <em class="text-primary fw-medium">{{ disease_info.scientific_pathogen }}</em>
+                </div>
+                <div class="small text-muted mt-2">
+                    <strong class="text-dark">{{ t('causes') }}:</strong> {{ disease_info.causes }}
+                </div>
+            </div>
+
+            <div class="mb-2">
+                <strong class="d-block small text-dark fw-bold mb-2 text-uppercase tracking-wide">
+                    <i class="fa-solid fa-list-ul text-success me-1"></i> {{ t('symptoms') }}:
+                </strong>
+                <ul class="list-unstyled mb-0 d-flex flex-column gap-2">
+                    {% for s in disease_info.symptoms %}
+                        <li class="small text-muted d-flex align-items-start gap-2">
+                            <i class="fa-solid fa-circle-exclamation text-warning mt-1 flex-shrink-0"></i>
+                            <span>{{ s }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dual Treatment Plans Side by Side -->
+<div class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <h4 class="fw-bold text-success-emphasis mb-0">
+            <i class="fa-solid fa-code-compare me-2"></i> Dual Treatment Framework
+        </h4>
+        <small class="text-muted">Choose between fast-acting chemical interventions or sustainable zero-residue organic management.</small>
+    </div>
+
+    <div class="treatment-grid">
+        <!-- Chemical Treatment Plan Card -->
+        <div class="treatment-card chemical">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="treatment-badge chemical">
+                    <i class="fa-solid fa-flask me-1"></i> {{ t('chemical_plan_badge') }}
+                </span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill small">
+                    Fast Acting
+                </span>
+            </div>
+            
+            <h5 class="fw-bold text-dark mb-2">{{ t('chemical_plan_title') }}</h5>
+            <p class="small text-muted mb-3 leading-relaxed">{{ disease_info.chemical_plan.approach }}</p>
+
+            <div class="mb-4">
+                <strong class="d-block small text-dark fw-bold mb-2">
+                    <i class="fa-solid fa-prescription-bottle-medical text-primary me-1"></i> {{ t('crop_protection_agents') }}:
+                </strong>
+                <div class="d-flex flex-column gap-2">
+                    {% for f in disease_info.chemical_plan.formulations %}
+                        <div class="p-3 border rounded-3 bg-white shadow-xs">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold text-primary">{{ f.name }}</span>
+                                <span class="badge bg-light text-dark border small">PHI: {{ f.phi_days }}</span>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="fa-solid fa-droplet text-info me-1"></i> Dosage: <strong>{{ f.dosage }}</strong>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="p-3 rounded-3 bg-white border d-flex flex-column gap-2 small">
+                <div>
+                    <strong class="text-dark"><i class="fa-regular fa-clock text-primary me-1"></i> {{ t('application_timing') }}:</strong>
+                    <div class="text-muted mt-1">{{ disease_info.chemical_plan.application_timing }}</div>
+                </div>
+                <hr class="my-1 border-secondary-subtle">
+                <div>
+                    <strong class="text-dark"><i class="fa-solid fa-shield-halved text-warning me-1"></i> {{ t('safety_precautions') }}:</strong>
+                    <div class="text-muted mt-1">{{ disease_info.chemical_plan.safety_precautions }}</div>
+                </div>
+                <hr class="my-1 border-secondary-subtle">
+                <div>
+                    <strong class="text-dark"><i class="fa-solid fa-water text-info me-1"></i> {{ t('irrigation_soil_guidance') }}:</strong>
+                    <div class="text-muted mt-1">{{ disease_info.chemical_plan.irrigation_guidance }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Organic Treatment Plan Card -->
+        <div class="treatment-card organic">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="treatment-badge organic">
+                    <i class="fa-solid fa-seedling me-1"></i> {{ t('organic_plan_badge') }}
+                </span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill small">
+                    Zero Residue &bull; Soil Safe
+                </span>
+            </div>
+
+            <h5 class="fw-bold text-dark mb-2">{{ t('organic_plan_title') }}</h5>
+            <p class="small text-muted mb-3 leading-relaxed">{{ disease_info.organic_plan.approach }}</p>
+
+            <div class="mb-4">
+                <strong class="d-block small text-dark fw-bold mb-2">
+                    <i class="fa-solid fa-leaf text-success me-1"></i> {{ t('bio_control_agents') }}:
+                </strong>
+                <div class="d-flex flex-column gap-2">
+                    {% for b in disease_info.organic_plan.bio_agents %}
+                        <div class="p-3 border rounded-3 bg-white shadow-xs">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold text-success">{{ b.name }}</span>
+                                <span class="badge bg-success-subtle text-success small">Bio-Certified</span>
+                            </div>
+                            <div class="text-muted small">
+                                <i class="fa-solid fa-mortar-pestle text-success me-1"></i> Dosage: <strong>{{ b.dosage }}</strong>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="p-3 rounded-3 bg-white border d-flex flex-column gap-2 small">
+                <div>
+                    <strong class="text-dark"><i class="fa-solid fa-scissors text-danger me-1"></i> {{ t('sanitation_removal') }}:</strong>
+                    <div class="text-muted mt-1">{{ disease_info.organic_plan.sanitation }}</div>
+                </div>
+                <hr class="my-1 border-secondary-subtle">
+                <div>
+                    <strong class="text-dark"><i class="fa-solid fa-mountain text-success me-1"></i> {{ t('soil_health_remedy') }}:</strong>
+                    <div class="text-muted mt-1">{{ disease_info.organic_plan.soil_health }}</div>
+                </div>
+                <hr class="my-1 border-secondary-subtle">
+                <div>
+                    <strong class="text-dark"><i class="fa-solid fa-shield-virus text-info me-1"></i> {{ t('preventive_measures') }}:</strong>
+                    <div class="text-muted mt-1">{{ disease_info.preventive_measures[0] if disease_info.preventive_measures else '' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comparison Matrix Table -->
+<div class="km-card mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h5 class="km-card-title mb-0">
+            <i class="fa-solid fa-scale-balanced text-primary"></i>
+            <span>{{ t('treatment_comparison') }}</span>
+        </h5>
+        <span class="badge bg-light text-muted border small">Decision Support Matrix</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 28%;"><i class="fa-solid fa-sliders me-1 text-muted"></i> Parameter</th>
+                    <th style="width: 36%;" class="text-primary"><i class="fa-solid fa-flask me-1"></i> Chemical Crop Protection</th>
+                    <th style="width: 36%;" class="text-success"><i class="fa-solid fa-seedling me-1"></i> Certified Organic Approach</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>{{ t('comparison_cost') }}</strong></td>
+                    <td>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">
+                            {{ disease_info.comparison.cost.chemical }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
+                            {{ disease_info.comparison.cost.organic }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>{{ t('comparison_speed') }}</strong></td>
+                    <td>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">
+                            {{ disease_info.comparison.speed.chemical }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
+                            {{ disease_info.comparison.speed.organic }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>{{ t('comparison_phi') }}</strong></td>
+                    <td>
+                        <span class="badge bg-warning-subtle text-dark border border-warning-subtle px-3 py-1">
+                            {{ disease_info.comparison.phi.chemical }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1">
+                            {{ disease_info.comparison.phi.organic }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>{{ t('comparison_eco') }}</strong></td>
+                    <td>
+                        <span class="badge bg-light text-muted border px-3 py-1">
+                            {{ disease_info.comparison.eco_impact.chemical }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-success text-white px-3 py-1">
+                            {{ disease_info.comparison.eco_impact.organic }}
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Scientific Disclaimer Card -->
+<div class="alert alert-light border border-secondary-subtle rounded-3 small text-muted d-flex align-items-center gap-3 shadow-xs">
+    <i class="fa-solid fa-circle-check text-success fs-4 flex-shrink-0"></i>
+    <div>
+        <strong>ICAR Validated Guidance:</strong> {{ t('disclaimer_text') }} Always wear recommended personal protective equipment (PPE) before preparing any chemical spray solutions.
+    </div>
+</div>
+{% endblock %}

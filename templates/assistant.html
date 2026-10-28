@@ -1,0 +1,364 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('assistant_header') }} — KrishiMitra AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold text-success-emphasis mb-1">{{ t('assistant_header') }}</h3>
+        <p class="text-muted small mb-0">{{ t('assistant_lead') }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-semibold border border-success-subtle d-inline-flex align-items-center gap-2">
+            <span class="badge rounded-circle bg-success p-1" style="width: 8px; height: 8px;"></span>
+            <span>Multilingual ICAR Agronomic Copilot</span>
+        </span>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Main Chat Window -->
+    <div class="col-lg-8">
+        <div class="km-card p-0 overflow-hidden shadow-sm d-flex flex-column" style="height: 680px;">
+            <!-- Chat Card Header -->
+            <div class="p-3 px-4 border-bottom bg-light d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="position-relative">
+                        <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px; font-size: 1.2rem;">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <span class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle" style="width: 12px; height: 12px;"></span>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-dark mb-0">KrishiMitra Smart Advisory Bot</div>
+                        <small class="text-muted d-flex align-items-center gap-1">
+                            <i class="fa-solid fa-language text-success"></i>
+                            <span>{{ 'मराठी' if current_lang == 'mr' else ('हिंदी' if current_lang == 'hi' else 'English') }} Active Mode</span>
+                        </small>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="clearLocalChat()" title="Clear screen messages">
+                        <i class="fa-solid fa-trash-can me-1"></i> Clear View
+                    </button>
+                </div>
+            </div>
+
+            <!-- Messages Box -->
+            <div class="km-chat-box flex-grow-1 p-4 mb-0 border-0" id="chatMessages" style="height: auto;">
+                <!-- Welcome Bot Message -->
+                <div class="km-msg bot shadow-xs">
+                    <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                        <i class="fa-solid fa-leaf text-success"></i>
+                        <strong class="text-success small">KrishiMitra AI</strong>
+                    </div>
+                    <div>
+                        {% if current_lang == 'mr' %}
+                            नमस्कार <strong>{{ user.fullname }}</strong>! मी आपला कृषिमित्र AI सहाय्यक आहे. आपण मला पिकांवरील रोग (उदा. करपा, पांढरी माशी), सेंद्रिय खते (जिवामृत, दशपर्णी अर्क), फवारणी व हवामान सल्ला, किंवा सरकारी योजनांविषयी मराठीत विचारू शकता. मी आपल्याला कशी मदत करू?
+                        {% elif current_lang == 'hi' %}
+                            नमस्ते <strong>{{ user.fullname }}</strong>! मैं आपका कृषिमित्र AI सहायक हूँ। आप मुझसे फसल रोगों के उपचार, जैविक खाद (जीवामृत), मौसम अनुसार कीटनाशक छिड़काव, अथवा सरकारी कृषि योजनाओं के बारे में हिंदी में पूछ सकते हैं।
+                        {% else %}
+                            Hello <strong>{{ user.fullname }}</strong>! I am your KrishiMitra AI Assistant. You can ask me any question regarding plant disease diagnosis, chemical vs organic remedies, weather-based spraying decisions, mandi prices, or government agricultural schemes.
+                        {% endif %}
+                    </div>
+                    <div class="km-msg-source">
+                        <i class="fa-solid fa-shield-halved text-success"></i> KrishiMitra Verified Agronomic Engine
+                    </div>
+                </div>
+
+                <!-- Existing User Queries from Database -->
+                {% for q in recent_queries[::-1] %}
+                    <div class="km-msg user">
+                        {{ q.question }}
+                    </div>
+                    <div class="km-msg bot shadow-xs">
+                        <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                            <i class="fa-solid fa-leaf text-success"></i>
+                            <strong class="text-success small">KrishiMitra AI</strong>
+                        </div>
+                        <div>{{ q.answer }}</div>
+                        <div class="km-msg-source">
+                            <i class="fa-solid fa-clock-rotate-left"></i> {{ q.created_at.strftime('%d %b, %H:%M') }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Chat Input Area -->
+            <div class="p-3 px-4 border-top bg-white">
+                <form id="chatForm" class="d-flex align-items-center gap-2">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light border-end-0 text-muted">
+                            <i class="fa-solid fa-keyboard"></i>
+                        </span>
+                        <input type="text" id="userQuestionInput" class="form-control border-start-0 py-2" placeholder="{{ t('ask_placeholder') }}" autocomplete="off" required>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-secondary px-3 py-2" id="voiceBtn" title="Speech to Text (Chrome / Edge)" onclick="toggleVoiceInput()">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+
+                    <button type="submit" class="btn btn-km-primary px-4 py-2" id="sendBtn">
+                        <span>{{ t('ask_btn') }}</span>
+                        <i class="fa-solid fa-paper-plane ms-1"></i>
+                    </button>
+                </form>
+                <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                    <small class="text-muted" style="font-size: 0.76rem;">Press <kbd class="bg-light text-dark border">Enter</kbd> to send query instantly</small>
+                    <small class="text-muted" style="font-size: 0.76rem;"><i class="fa-solid fa-lock text-success me-1"></i> Private & Agronomically Grounded</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggested Questions & Advisory Shortcuts -->
+    <div class="col-lg-4">
+        <!-- FAQ Queries Card -->
+        <div class="km-card mb-4">
+            <h5 class="km-card-title mb-3">
+                <i class="fa-solid fa-lightbulb text-warning"></i>
+                <span>{{ t('suggested_questions') }}</span>
+            </h5>
+            <p class="small text-muted mb-3">Tap any question below to test KrishiMitra's instant agronomic advice:</p>
+
+            <div class="d-flex flex-column gap-2" id="faqButtons">
+                {% if current_lang == 'mr' %}
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>टोमॅटोवरील अर्ली ब्लाइट (करपा) कसा रोखावा?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>जिवामृत कसे तयार करावे आणि कधी द्यावे?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>आज फवारणी करणे सुरक्षित आहे का?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>कुसुम योजनेतून सौर पंपावर किती अनुदान मिळते?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>पांढऱ्या माशीवर सेंद्रिय उपाय कोणता?</span>
+                    </button>
+                {% elif current_lang == 'hi' %}
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>टमाटर के अगेती झुलसा का क्या उपचार है?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>जीवामृत बनाने की आसान विधि क्या है?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>क्या आज कीटनाशक छिड़काव के लिए सही मौसम है?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>पीएम किसान योजना के क्या लाभ हैं?</span>
+                    </button>
+                {% else %}
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>How to manage early blight in tomato organically?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>How do I prepare Jeevamrut fertilizer?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>What are the wind conditions for spraying?</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success text-start p-2 px-3 rounded-3 faq-btn d-flex align-items-start gap-2">
+                        <i class="fa-solid fa-circle-question text-success mt-1 flex-shrink-0"></i>
+                        <span>What is the subsidy under PM-KUSUM solar scheme?</span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Privacy & AI Grounding Notice -->
+        <div class="km-card bg-light p-3 border shadow-xs mb-3">
+            <div class="d-flex align-items-start gap-2">
+                <i class="fa-solid fa-shield-halved text-success fs-5 mt-1"></i>
+                <div class="small">
+                    <strong class="text-dark d-block mb-1">Grounded Agronomic Data</strong>
+                    <span class="text-muted">
+                        All plant protection dosages, IPM rules, and safety intervals conform to official publications of the 
+                        <strong>Indian Council of Agricultural Research (ICAR)</strong> and <strong>Mahatma Phule Krishi Vidyapeeth (MPKV)</strong>.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Emergency Contacts -->
+        <div class="km-card p-3 border shadow-xs">
+            <h6 class="fw-bold mb-2 small text-uppercase text-muted">
+                <i class="fa-solid fa-phone me-1 text-primary"></i> Kisan Call Centre
+            </h6>
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="fw-bold fs-5 text-dark">1800-180-1551</span>
+                    <div class="text-muted small">Toll-free Government Helpline (6 AM - 10 PM)</div>
+                </div>
+                <a href="tel:18001801551" class="btn btn-sm btn-outline-primary rounded-circle" style="width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-phone"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const chatForm = document.getElementById('chatForm');
+    const inputField = document.getElementById('userQuestionInput');
+    const chatBox = document.getElementById('chatMessages');
+    const sendBtn = document.getElementById('sendBtn');
+    const voiceBtn = document.getElementById('voiceBtn');
+
+    // Scroll chat to bottom on load
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    // Handle FAQ button clicks
+    document.querySelectorAll('.faq-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            inputField.value = btn.innerText.trim();
+            chatForm.dispatchEvent(new Event('submit'));
+        });
+    });
+
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const question = inputField.value.trim();
+        if (!question) return;
+
+        // Append User Message to UI
+        appendMessage(question, 'user');
+        inputField.value = '';
+
+        // Animated typing indicator with bouncing dots
+        const typingId = 'typing_' + Date.now();
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'km-msg bot text-muted small shadow-xs';
+        typingDiv.id = typingId;
+        typingDiv.innerHTML = `
+            <div class="d-flex align-items-center gap-2">
+                <div class="km-typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+                <span class="small text-muted">KrishiMitra Assistant is thinking...</span>
+            </div>
+        `;
+        chatBox.appendChild(typingDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        sendBtn.disabled = true;
+
+        try {
+            const resp = await fetch('/ask_assistant', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: question })
+            });
+
+            const data = await resp.json();
+            const elem = document.getElementById(typingId);
+            if (elem) elem.remove();
+
+            if (data.success) {
+                appendMessage(data.answer, 'bot', data.source);
+            } else {
+                appendMessage(data.error || "Sorry, I could not process your query right now.", 'bot', "System Error");
+            }
+
+        } catch (err) {
+            const elem = document.getElementById(typingId);
+            if (elem) elem.remove();
+            appendMessage("Connection error: " + err.message, 'bot', "Network Error");
+        } finally {
+            sendBtn.disabled = false;
+        }
+    });
+
+    function appendMessage(text, role, source) {
+        const div = document.createElement('div');
+        div.className = `km-msg ${role} shadow-xs`;
+        
+        if (role === 'bot') {
+            div.innerHTML = `
+                <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                    <i class="fa-solid fa-leaf text-success"></i>
+                    <strong class="text-success small">KrishiMitra AI</strong>
+                </div>
+                <div>${text}</div>
+                <div class="km-msg-source"><i class="fa-solid fa-robot me-1"></i> ${source || 'KrishiMitra Agricultural Engine'}</div>
+            `;
+        } else {
+            div.textContent = text;
+        }
+
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function clearLocalChat() {
+        chatBox.innerHTML = `
+            <div class="km-msg bot shadow-xs">
+                <div class="d-flex align-items-center gap-2 mb-2 pb-1 border-bottom">
+                    <i class="fa-solid fa-leaf text-success"></i>
+                    <strong class="text-success small">KrishiMitra AI</strong>
+                </div>
+                <div>Screen view reset. What agricultural topic would you like to explore next?</div>
+                <div class="km-msg-source"><i class="fa-solid fa-shield-halved text-success"></i> KrishiMitra Agronomic Assistant</div>
+            </div>
+        `;
+    }
+
+    // Voice Input via Web Speech API if supported
+    function toggleVoiceInput() {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Voice input is supported in Google Chrome, Microsoft Edge, and modern mobile browsers.");
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        {% if current_lang == 'mr' %}
+            recognition.lang = 'mr-IN';
+        {% elif current_lang == 'hi' %}
+            recognition.lang = 'hi-IN';
+        {% else %}
+            recognition.lang = 'en-IN';
+        {% endif %}
+        recognition.interimResults = false;
+
+        voiceBtn.classList.add('btn-danger', 'text-white');
+        voiceBtn.innerHTML = '<i class="fa-solid fa-circle-dot fa-beat-fade"></i>';
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            inputField.value = transcript;
+            chatForm.dispatchEvent(new Event('submit'));
+        };
+
+        recognition.onerror = () => {
+            voiceBtn.classList.remove('btn-danger', 'text-white');
+            voiceBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+        };
+
+        recognition.onend = () => {
+            voiceBtn.classList.remove('btn-danger', 'text-white');
+            voiceBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+        };
+
+        recognition.start();
+    }
+</script>
+{% endblock %}

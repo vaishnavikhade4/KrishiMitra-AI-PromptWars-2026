@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('profile_settings') }} — KrishiMitra AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold text-success-emphasis mb-1">{{ t('profile_header') }}</h3>
+        <p class="text-muted small mb-0">{{ t('profile_lead') }}</p>
+    </div>
+    <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill small border border-success-subtle">
+        <i class="fa-solid fa-id-badge me-1"></i> Farmer ID #KM-{{ "%05d"|format(user.id) }}
+    </span>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Form Settings -->
+    <div class="col-lg-8">
+        <div class="km-card shadow-sm p-4">
+            <h5 class="km-card-title mb-4 pb-2 border-bottom">
+                <i class="fa-solid fa-user-pen text-success"></i>
+                <span>Personal & Agronomic Farm Profile</span>
+            </h5>
+
+            <form method="POST" action="{{ url_for('settings') }}">
+                <!-- Identity Section -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-3 tracking-wide text-muted">
+                        <i class="fa-solid fa-address-card text-success me-1"></i> Basic Identity
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">{{ t('fullname') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-user"></i></span>
+                                <input type="text" name="fullname" class="form-control border-start-0" value="{{ user.fullname }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">{{ t('mobile') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-phone"></i></span>
+                                <input type="tel" name="mobile" class="form-control border-start-0" value="{{ user.mobile }}" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account & Language -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-3 tracking-wide text-muted">
+                        <i class="fa-solid fa-globe text-primary me-1"></i> Account & Preferred Language
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">{{ t('email') }} (Read-only)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-envelope"></i></span>
+                                <input type="email" class="form-control bg-light border-start-0" value="{{ user.email }}" disabled>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">{{ t('language') }}</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-language"></i></span>
+                                <select name="preferred_language" class="form-select border-start-0">
+                                    <option value="mr" {% if user.preferred_language == 'mr' %}selected{% endif %}>मराठी (Marathi)</option>
+                                    <option value="en" {% if user.preferred_language == 'en' %}selected{% endif %}>English</option>
+                                    <option value="hi" {% if user.preferred_language == 'hi' %}selected{% endif %}>हिंदी (Hindi)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Geography Section -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-3 tracking-wide text-muted">
+                        <i class="fa-solid fa-map-location-dot text-warning me-1"></i> Farm Location
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">State (राज्य)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-landmark"></i></span>
+                                <input type="text" name="state" class="form-control border-start-0" value="{{ user.state or 'Maharashtra' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">District (जिल्हा)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-location-dot"></i></span>
+                                <input type="text" name="district" class="form-control border-start-0" value="{{ user.district or 'Pune' }}" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Land & Cultivation Section -->
+                <div class="mb-4">
+                    <h6 class="fw-bold text-dark small text-uppercase mb-3 tracking-wide text-muted">
+                        <i class="fa-solid fa-wheat-awn text-success me-1"></i> Land & Cultivation Details
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">Total Farm Land Holding (Acres)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-chart-area"></i></span>
+                                <input type="number" step="0.5" name="farm_size" class="form-control border-start-0" value="{{ user.farm_size or 2.5 }}">
+                                <span class="input-group-text bg-light">Acres</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold text-muted">Primary Cultivated Crops</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0"><i class="fa-solid fa-seedling"></i></span>
+                                <input type="text" name="primary_crops" class="form-control border-start-0" value="{{ user.primary_crops or 'Tomato, Onion, Soybean' }}" placeholder="e.g. Tomato, Onion, Cotton">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end pt-3 border-top">
+                    <button type="submit" class="btn btn-km-primary px-5 py-2 shadow-sm">
+                        <i class="fa-solid fa-floppy-disk me-2"></i> {{ t('save_profile') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Farmer Digital Identity Card -->
+    <div class="col-lg-4">
+        <div class="km-card shadow-sm text-center p-4 position-relative overflow-hidden mb-4">
+            <div class="position-absolute top-0 start-0 w-100" style="height: 60px; background: linear-gradient(135deg, #09341c 0%, #10b981 100%);"></div>
+
+            <div class="position-relative mt-3">
+                <img src="https://ui-avatars.com/api/?name={{ user.fullname | urlencode }}&background=10b981&color=fff&size=128&bold=true" 
+                     alt="Farmer Avatar" 
+                     class="rounded-circle border border-4 border-white shadow-sm mb-3" 
+                     width="96" height="96">
+                <h5 class="fw-bold mb-1 text-dark">{{ user.fullname }}</h5>
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-1 mb-3">
+                    <i class="fa-solid fa-certificate me-1"></i> Verified KrishiMitra Farmer
+                </span>
+            </div>
+
+            <div class="text-start border-top pt-3 small text-muted d-flex flex-column gap-2 mt-2">
+                <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+                    <span><i class="fa-regular fa-calendar-check me-1 text-muted"></i> Joined:</span>
+                    <strong class="text-dark">{{ user.created_at.strftime('%d %b %Y') }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+                    <span><i class="fa-solid fa-location-dot me-1 text-muted"></i> Location:</span>
+                    <strong class="text-dark">{{ user.district }}, {{ user.state }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-1 border-bottom border-light">
+                    <span><i class="fa-solid fa-tractor me-1 text-muted"></i> Land Holding:</span>
+                    <strong class="text-dark">{{ user.farm_size }} Acres</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-1">
+                    <span><i class="fa-solid fa-seedling me-1 text-muted"></i> Main Crops:</span>
+                    <strong class="text-dark">{{ user.primary_crops }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Privacy & Security Guarantee Card -->
+        <div class="alert alert-light border border-secondary-subtle rounded-3 small p-3 text-muted shadow-xs mb-3">
+            <div class="d-flex align-items-start gap-2">
+                <i class="fa-solid fa-shield-halved text-success fs-5 mt-1"></i>
+                <div>
+                    <strong class="text-dark d-block mb-1">Agronomic Data Privacy:</strong>
+                    Your farm profile data is used strictly to tailor local weather advisories, spray windows, mandi notifications, and DBT scheme eligibility.
+                </div>
+            </div>
+        </div>
+
+        <!-- Language Quick Switch Card -->
+        <div class="km-card p-3 shadow-xs">
+            <h6 class="fw-bold mb-2 small text-uppercase text-muted">
+                <i class="fa-solid fa-language me-1 text-success"></i> Instant Interface Language
+            </h6>
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('set_language', lang='mr') }}" class="btn btn-sm {% if current_lang == 'mr' %}btn-success{% else %}btn-outline-secondary{% endif %} flex-grow-1">
+                    मराठी
+                </a>
+                <a href="{{ url_for('set_language', lang='en') }}" class="btn btn-sm {% if current_lang == 'en' %}btn-success{% else %}btn-outline-secondary{% endif %} flex-grow-1">
+                    English
+                </a>
+                <a href="{{ url_for('set_language', lang='hi') }}" class="btn btn-sm {% if current_lang == 'hi' %}btn-success{% else %}btn-outline-secondary{% endif %} flex-grow-1">
+                    हिंदी
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

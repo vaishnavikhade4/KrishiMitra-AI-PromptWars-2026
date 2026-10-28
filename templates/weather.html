@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('weather_header') }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2 km-animate-fade">
+    <div>
+        <h3 class="fw-extrabold text-success-emphasis mb-1">{{ t('weather_header') }}</h3>
+        <p class="text-muted small mb-0">{{ t('weather_lead') }}</p>
+    </div>
+    
+    {% if weather.configured %}
+        <span class="badge bg-success-subtle text-success px-3 py-2 rounded-pill fw-bold border border-success-subtle">
+            <i class="fa-solid fa-satellite-dish me-1"></i> Live Meteorological Stream
+        </span>
+    {% else %}
+        <span class="badge bg-warning-subtle text-warning px-3 py-2 rounded-pill fw-bold border border-warning-subtle">
+            <i class="fa-solid fa-circle-exclamation me-1"></i> Regional Baseline (API Config Required)
+        </span>
+    {% endif %}
+</div>
+
+<!-- API Notice if unconfigured -->
+{% if not weather.configured %}
+<div class="alert alert-warning d-flex align-items-center gap-3 mb-4 border-0 shadow-sm km-animate-fade">
+    <i class="fa-solid fa-triangle-exclamation fs-3 text-warning"></i>
+    <div>
+        <h6 class="fw-bold mb-1">{{ t('weather_api_not_configured') }}</h6>
+        <small class="text-muted">Displaying verified regional meteorological baseline. To stream live hyper-local data, obtain a free API key from <a href="https://openweathermap.org/api" target="_blank" class="fw-semibold text-dark">OpenWeatherMap</a> and configure <code>WEATHER_API_KEY</code> in your <code>.env</code> file.</small>
+    </div>
+</div>
+{% endif %}
+
+<!-- Location Search Bar & Quick Location Pills -->
+<div class="km-card mb-4 km-animate-fade">
+    <div class="row g-3 align-items-center">
+        <div class="col-md-7">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" id="cityInput" class="form-control border-start-0 ps-0" placeholder="{{ t('search_location') }}" value="{{ weather.city }}">
+                <button class="btn btn-km-primary px-4" id="searchWeatherBtn" type="button">
+                    <i class="fa-solid fa-cloud-arrow-down me-1"></i> {{ t('search_btn') }}
+                </button>
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <small class="text-muted fw-bold">Quick Select:</small>
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 quick-city-btn" data-city="Pune">Pune</button>
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 quick-city-btn" data-city="Nashik">Nashik</button>
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 quick-city-btn" data-city="Nagpur">Nagpur</button>
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 quick-city-btn" data-city="Kolhapur">Kolhapur</button>
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 quick-city-btn" data-city="Solapur">Solapur</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Micro-Climate Dashboard -->
+<div class="row g-4 mb-4 km-animate-fade">
+    <!-- Main Condition Card -->
+    <div class="col-lg-5">
+        <div class="km-card h-100" style="background: linear-gradient(135deg, #09341c 0%, #0f5132 100%); color: #ffffff;">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <span class="badge bg-white text-success px-3 py-1 rounded-pill mb-2 fw-bold">
+                        <i class="fa-solid fa-location-dot me-1"></i> <span id="cardCity">{{ weather.city }}</span>
+                    </span>
+                    <h1 class="display-3 fw-extrabold mb-0 text-white"><span id="cardTemp">{{ weather.temp }}</span>°C</h1>
+                    <p class="mb-0 text-white-50" style="font-size:0.95rem;">
+                        {{ t('feels_like') }} <span id="cardFeelsLike">{{ weather.feels_like }}</span>°C &bull; <span id="cardCondition">{{ weather.condition }}</span>
+                    </p>
+                </div>
+                <img id="cardIcon" src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Weather Icon" width="90" height="90">
+            </div>
+
+            <div class="row text-center mt-4 pt-3 border-top border-white-50 g-2">
+                <div class="col-4">
+                    <small class="text-white-50 d-block">{{ t('humidity') }}</small>
+                    <span class="fs-5 fw-bold" id="cardHumidity">{{ weather.humidity }}%</span>
+                </div>
+                <div class="col-4">
+                    <small class="text-white-50 d-block">{{ t('wind_speed') }}</small>
+                    <span class="fs-5 fw-bold" id="cardWind">{{ weather.wind_speed }} km/h</span>
+                </div>
+                <div class="col-4">
+                    <small class="text-white-50 d-block">{{ t('rain_prob') }}</small>
+                    <span class="fs-5 fw-bold" id="cardRain">{{ weather.rain_prob }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3 Actionable Agronomic Decision Advisories -->
+    <div class="col-lg-7">
+        <div class="km-card h-100">
+            <h5 class="km-card-title mb-3">
+                <i class="fa-solid fa-wheat-awn-circle-exclamation text-warning"></i>
+                <span>{{ t('today_advisory') }}</span>
+            </h5>
+
+            <div class="d-flex flex-column gap-3" id="advisoriesContainer">
+                <!-- Spraying Advisory -->
+                <div class="p-3 border rounded-3 bg-light d-flex align-items-start gap-3 shadow-xs">
+                    <div class="km-stat-icon green p-2" style="width:46px; height:46px; font-size:1.25rem;">
+                        <i class="fa-solid fa-spray-can"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h6 class="mb-0 fw-bold">{{ t('spraying_advisory') }}</h6>
+                            <span class="badge bg-{{ weather.advisories.spraying.badge }} rounded-pill" id="sprayBadge">
+                                {{ weather.advisories.spraying.status }}
+                            </span>
+                        </div>
+                        <p class="small text-muted mb-0" id="sprayMsg">
+                            {{ weather.advisories.spraying.message }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Irrigation Advisory -->
+                <div class="p-3 border rounded-3 bg-light d-flex align-items-start gap-3 shadow-xs">
+                    <div class="km-stat-icon blue p-2" style="width:46px; height:46px; font-size:1.25rem;">
+                        <i class="fa-solid fa-droplet"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h6 class="mb-0 fw-bold">{{ t('irrigation_advisory') }}</h6>
+                            <span class="badge bg-{{ weather.advisories.irrigation.badge }} rounded-pill" id="irrigBadge">
+                                {{ weather.advisories.irrigation.status }}
+                            </span>
+                        </div>
+                        <p class="small text-muted mb-0" id="irrigMsg">
+                            {{ weather.advisories.irrigation.message }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Fungal & Pest Risk Alert -->
+                <div class="p-3 border rounded-3 bg-light d-flex align-items-start gap-3 shadow-xs">
+                    <div class="km-stat-icon amber p-2" style="width:46px; height:46px; font-size:1.25rem;">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <h6 class="mb-0 fw-bold">{{ t('crop_risk_advisory') }}</h6>
+                            <span class="badge bg-{{ weather.advisories.disease_risk.badge }} rounded-pill" id="riskBadge">
+                                {{ weather.advisories.disease_risk.status }}
+                            </span>
+                        </div>
+                        <p class="small text-muted mb-0" id="riskMsg">
+                            {{ weather.advisories.disease_risk.message }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 5-Day Forecast Grid -->
+<div class="km-card km-animate-fade">
+    <h5 class="km-card-title mb-3">
+        <i class="fa-solid fa-calendar-days"></i>
+        <span>{{ t('forecast_5day') }}</span>
+    </h5>
+
+    <div class="row g-3" id="forecastGrid">
+        {% for f in weather.forecast %}
+        <div class="col-6 col-md-4 col-lg-2-4" style="flex: 1 0 18%;">
+            <div class="p-3 border rounded-3 text-center bg-light h-100 shadow-xs transition hover-shadow">
+                <small class="fw-bold text-muted d-block mb-1">{{ f.date }}</small>
+                <img src="https://openweathermap.org/img/wn/{{ f.icon }}@2x.png" alt="Icon" width="52" height="52">
+                <div class="fw-extrabold fs-4 text-dark">{{ f.temp }}°C</div>
+                <small class="text-muted d-block text-truncate fw-semibold" title="{{ f.condition }}">{{ f.condition }}</small>
+                <div class="badge bg-info-subtle text-info small mt-2 rounded-pill px-2">
+                    <i class="fa-solid fa-droplet me-1"></i> {{ f.pop }}% Rain
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const searchBtn = document.getElementById('searchWeatherBtn');
+    const cityInput = document.getElementById('cityInput');
+
+    searchBtn.addEventListener('click', () => {
+        const city = cityInput.value.trim();
+        if (city) fetchWeather(city);
+    });
+
+    cityInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const city = cityInput.value.trim();
+            if (city) fetchWeather(city);
+        }
+    });
+
+    document.querySelectorAll('.quick-city-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const city = e.target.dataset.city;
+            cityInput.value = city;
+            fetchWeather(city);
+        });
+    });
+
+    async function fetchWeather(city) {
+        searchBtn.disabled = true;
+        searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Loading...';
+
+        try {
+            const resp = await fetch('/get_weather', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ city: city })
+            });
+            const data = await resp.json();
+
+            if (data.error && !data.temp) {
+                alert(data.error);
+                return;
+            }
+
+            document.getElementById('cardCity').textContent = data.city;
+            document.getElementById('cardTemp').textContent = data.temp;
+            document.getElementById('cardFeelsLike').textContent = data.feels_like;
+            document.getElementById('cardCondition').textContent = data.condition;
+            document.getElementById('cardIcon').src = `https://openweathermap.org/img/wn/${data.icon}@2x.png`;
+            document.getElementById('cardHumidity').textContent = data.humidity + "%";
+            document.getElementById('cardWind').textContent = data.wind_speed + " km/h";
+            document.getElementById('cardRain').textContent = data.rain_prob + "%";
+
+            if (data.advisories) {
+                const adv = data.advisories;
+                const sp = document.getElementById('sprayBadge');
+                sp.className = `badge bg-${adv.spraying.badge} rounded-pill`;
+                sp.textContent = adv.spraying.status;
+                document.getElementById('sprayMsg').textContent = adv.spraying.message;
+
+                const ir = document.getElementById('irrigBadge');
+                ir.className = `badge bg-${adv.irrigation.badge} rounded-pill`;
+                ir.textContent = adv.irrigation.status;
+                document.getElementById('irrigMsg').textContent = adv.irrigation.message;
+
+                const rk = document.getElementById('riskBadge');
+                rk.className = `badge bg-${adv.disease_risk.badge} rounded-pill`;
+                rk.textContent = adv.disease_risk.status;
+                document.getElementById('riskMsg').textContent = adv.disease_risk.message;
+            }
+
+            if (data.forecast && data.forecast.length) {
+                const grid = document.getElementById('forecastGrid');
+                grid.innerHTML = "";
+                data.forecast.forEach(f => {
+                    const col = document.createElement('div');
+                    col.style.flex = "1 0 18%";
+                    col.innerHTML = `
+                        <div class="p-3 border rounded-3 text-center bg-light h-100 shadow-xs">
+                            <small class="fw-bold text-muted d-block mb-1">${f.date}</small>
+                            <img src="https://openweathermap.org/img/wn/${f.icon}@2x.png" alt="Icon" width="52" height="52">
+                            <div class="fw-extrabold fs-4 text-dark">${f.temp}°C</div>
+                            <small class="text-muted d-block text-truncate fw-semibold">${f.condition}</small>
+                            <div class="badge bg-info-subtle text-info small mt-2 rounded-pill px-2">
+                                <i class="fa-solid fa-droplet me-1"></i> ${f.pop}% Rain
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(col);
+                });
+            }
+
+        } catch (err) {
+            alert("Error fetching weather: " + err.message);
+        } finally {
+            searchBtn.disabled = false;
+            searchBtn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down me-1"></i> {{ t("search_btn") }}';
+        }
+    }
+</script>
+{% endblock %}

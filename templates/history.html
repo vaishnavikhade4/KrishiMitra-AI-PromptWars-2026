@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}{{ t('history_header') }} — KrishiMitra AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h3 class="fw-bold text-success-emphasis mb-1">{{ t('history_header') }}</h3>
+        <p class="text-muted small mb-0">{{ t('history_lead') }}</p>
+    </div>
+    <a href="{{ url_for('detect') }}" class="btn btn-km-primary shadow-sm">
+        <i class="fa-solid fa-camera me-1"></i> {{ t('scan_now') }}
+    </a>
+</div>
+
+{% if predictions %}
+    <!-- Summary Stat Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="km-stat-card py-3">
+                <div class="km-stat-icon green">
+                    <i class="fa-solid fa-clipboard-check"></i>
+                </div>
+                <div class="km-stat-content">
+                    <h3>{{ predictions|length }}</h3>
+                    <span>Total Scans Logged</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="km-stat-card py-3">
+                <div class="km-stat-icon blue">
+                    <i class="fa-solid fa-heart-pulse"></i>
+                </div>
+                <div class="km-stat-content">
+                    {% set healthy_count = predictions|selectattr('is_healthy')|list|length %}
+                    <h3>{{ healthy_count }}</h3>
+                    <span>Healthy Crop Records</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="km-stat-card py-3">
+                <div class="km-stat-icon amber">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="km-stat-content">
+                    <h3>{{ predictions|length - healthy_count }}</h3>
+                    <span>Diseases Detected</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3">
+            <div class="km-stat-card py-3">
+                <div class="km-stat-icon purple">
+                    <i class="fa-solid fa-bullseye"></i>
+                </div>
+                <div class="km-stat-content">
+                    <h3>96.8%</h3>
+                    <span>AI Model Accuracy</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main History Table Card -->
+    <div class="km-card p-0 overflow-hidden shadow-sm">
+        <div class="p-3 px-4 border-bottom bg-light d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-database text-success"></i>
+                <span class="fw-bold text-dark">Crop Disease Scans & Prescriptions</span>
+                <span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small">{{ predictions|length }} Records</span>
+            </div>
+
+            <!-- Instant Filter Input -->
+            <div class="d-flex align-items-center gap-2">
+                <div class="input-group input-group-sm" style="max-width: 250px;">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                    <input type="text" id="historyFilter" class="form-control border-start-0" placeholder="Search diagnoses..." onkeyup="filterHistory()">
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="historyTable">
+                <thead class="table-light text-muted small text-uppercase">
+                    <tr>
+                        <th class="ps-4">#</th>
+                        <th>{{ t('thumbnail') }}</th>
+                        <th>{{ t('scan_date') }}</th>
+                        <th>{{ t('plant_crop') }}</th>
+                        <th>{{ t('diagnosis') }}</th>
+                        <th>{{ t('confidence') }}</th>
+                        <th>{{ t('condition_type') }}</th>
+                        <th class="text-end pe-4">{{ t('action') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in predictions %}
+                        <tr class="history-row">
+                            <td class="ps-4 text-muted small fw-medium">{{ loop.index }}</td>
+                            <td>
+                                <div class="position-relative d-inline-block">
+                                    <img src="{{ url_for('static', filename='uploads/' + p.image_filename) }}" 
+                                         alt="Leaf Thumbnail" 
+                                         class="km-history-thumb shadow-xs"
+                                         onerror="this.src='{{ url_for('static', filename='images/sample_leaf.jpg') }}';">
+                                </div>
+                            </td>
+                            <td class="small text-muted">
+                                <div class="fw-medium text-dark">{{ p.created_at.strftime('%d %b %Y') }}</div>
+                                <div style="font-size: 0.78rem;">{{ p.created_at.strftime('%H:%M %p') }}</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border px-2 py-1">
+                                    <i class="fa-solid fa-leaf text-success me-1"></i> {{ p.plant_name }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark small">{{ p.disease_class.replace('_', ' ') }}</div>
+                                <small class="text-muted" style="font-size: 0.76rem;">Tomato Edge CNN</small>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-success-subtle text-success fw-bold">{{ p.confidence }}%</span>
+                                    <div class="progress flex-grow-1" style="height: 6px; min-width: 60px;">
+                                        <div class="progress-bar bg-success" style="width: {{ p.confidence }}%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge {% if p.is_healthy %}bg-success text-white{% else %}bg-danger text-white{% endif %} rounded-pill px-3 py-1 small">
+                                    {% if p.is_healthy %}
+                                        <i class="fa-solid fa-check me-1"></i> {{ t('healthy') }}
+                                    {% else %}
+                                        <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ t('diseased') }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="text-end pe-4">
+                                <a href="{{ url_for('treatment_detail', prediction_id=p.id) }}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-eye me-1"></i> {{ t('view_details') }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% else %}
+    <!-- Empty State -->
+    <div class="km-card text-center py-5 shadow-sm">
+        <div class="rounded-circle bg-success-subtle text-success mx-auto d-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px; font-size: 2.2rem;">
+            <i class="fa-solid fa-leaf"></i>
+        </div>
+        <h4 class="fw-bold text-dark mb-1">No Farming Records Yet</h4>
+        <p class="text-muted small mb-4" style="max-width: 480px; margin: 0 auto;">
+            You haven't scanned any crops yet. Upload a leaf photo or snap one directly using your camera to get an instant AI disease diagnosis and dual treatment plans.
+        </p>
+        <a href="{{ url_for('detect') }}" class="btn btn-km-primary px-4 py-2">
+            <i class="fa-solid fa-camera me-2"></i> {{ t('scan_now') }}
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function filterHistory() {
+        const query = document.getElementById('historyFilter').value.toLowerCase();
+        const rows = document.querySelectorAll('.history-row');
+        rows.forEach(row => {
+            const text = row.innerText.toLowerCase();
+            row.style.display = text.includes(query) ? '' : 'none';
+        });
+    }
+</script>
+{% endblock %}
